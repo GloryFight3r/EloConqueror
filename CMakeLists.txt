@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.16)
+project(elo-conqueror)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+add_library(EloConquerorLib "src/board.cpp" "src/search.cpp")
+
+target_include_directories(EloConquerorLib PUBLIC "include/")
+
+add_executable(EloConqueror "src/main.cpp")
+target_link_libraries(EloConqueror PRIVATE EloConquerorLib)
