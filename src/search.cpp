@@ -50,7 +50,7 @@ std::vector<Move> generateMoves(const int32_t move_row[],
       moves.push_back(Move{from_bitboard_pos, to_bitboard_pos});
     }
 
-    piece_positions ^= (1LL << position);
+    piece_positions ^= (int64_t{1} << position);
   }
 
   return moves;
@@ -113,7 +113,7 @@ std::vector<Move> moveIncrementally(const Board &board, bool should_move,
       }
     }
 
-    piece_positions ^= (1LL << position);
+    piece_positions ^= (int64_t{1} << position);
   }
   return moves;
 }

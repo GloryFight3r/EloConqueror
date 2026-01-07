@@ -32,8 +32,9 @@ Board::Board() {
   _pieces[1][4] |= getPositionAsBitboard(7, 6);
 
   // initialize the pawns
-  _pieces[0][5] = ((1LL << BOARD_COLS) - 1) << BOARD_COLS;
-  _pieces[1][5] = ((1LL << BOARD_COLS) - 1) << (BOARD_COLS * (BOARD_ROWS - 2));
+  _pieces[0][5] = ((int64_t{1} << BOARD_COLS) - int64_t{1}) << BOARD_COLS;
+  _pieces[1][5] = ((int64_t{1} << BOARD_COLS) - int64_t{1})
+                  << (BOARD_COLS * (BOARD_ROWS - 2));
 }
 
 Board Board::makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,

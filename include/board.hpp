@@ -12,7 +12,7 @@ public:
   Board();
 
   static inline int64_t getPositionAsBitboard(int8_t row, int8_t col) {
-    return (1LL << (row * BOARD_COLS + col));
+    return (int64_t{1} << (row * BOARD_COLS + col));
   }
 
   Board makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,
