@@ -13,6 +13,7 @@ struct Move {
   Pieces piece_type;
   MoveType move_type;
 
+  Move() = default;
   Move(int64_t pos_from_, int64_t pos_to_, Pieces piece_type_,
        MoveType move_type_)
       : pos_from(pos_from_), pos_to(pos_to_), piece_type(piece_type_),

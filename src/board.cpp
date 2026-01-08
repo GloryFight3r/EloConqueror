@@ -151,8 +151,9 @@ Board::Board(std::string fen_string) {
 
 Board Board::makeMove(const std::string &move_to_make) const {
 
-  std::vector<Move> all_moves =
-      MoveExplorer::searchAllMoves(*this, _player_turn, true);
+  std::vector<Move> all_moves;
+  all_moves.resize(256);
+  MoveExplorer::searchAllMoves(*this, _player_turn, true, all_moves);
 
   for (const auto &possible_move : all_moves) {
     if (possible_move.formatted() == move_to_make) {
@@ -267,26 +268,18 @@ Board Board::makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,
   return new_board;
 }
 
-bool Board::isCellNotEmpty(int64_t to_pos, bool turn) const {
-  bool result = 0;
-  for (std::size_t i{0}; i < Board::ALL_PIECE_TYPES; i++) {
-    result |= static_cast<bool>(_pieces[turn][i] & to_pos);
-  }
-
-  return result;
-}
-
 bool Board::isUnderCheck(bool turn) const {
+  std::vector<Move> all_attacked_squares;
+  all_attacked_squares.resize(64);
 
-  std::vector<Move> attacked_squares =
-      MoveExplorer::searchAllMoves(*this, turn ^ 1, false);
+  MoveExplorer::searchAllMoves(*this, turn ^ 1, false, all_attacked_squares);
 
-  bool result = false;
-  for (const auto &move_to_check : attacked_squares) {
-    result |=
-        static_cast<bool>(move_to_check.pos_to & _pieces[turn][Pieces::KING]);
+  for (const auto &move_to_check : all_attacked_squares) {
+    if (static_cast<bool>(move_to_check.pos_to & _pieces[turn][Pieces::KING])) {
+      return true;
+    }
   }
-  return result;
+  return false;
 }
 
 void Board::displayBoard() const {

@@ -8,20 +8,20 @@
 #include <vector>
 
 namespace MoveExplorer {
-std::vector<Move> searchAllMoves(const Board &board, const bool turn,
-                                 const bool should_move);
-std::vector<Move> searchKingMoves(const Board &board, const bool turn,
-                                  const bool should_move);
-std::vector<Move> searchQueenMoves(const Board &board, const bool turn,
-                                   const bool should_move);
-std::vector<Move> searchRookMoves(const Board &board, const bool turn,
-                                  const bool should_move);
-std::vector<Move> searchBishopMoves(const Board &board, const bool turn,
-                                    const bool should_move);
-std::vector<Move> searchKnightMoves(const Board &board, const bool turn,
-                                    const bool should_move);
-std::vector<Move> searchPawnMoves(const Board &board, const bool turn,
-                                  const bool should_move);
+void searchAllMoves(const Board &board, const bool turn, const bool should_move,
+                    std::vector<Move> &moves);
+void searchKingMoves(const Board &board, const bool turn,
+                     const bool should_move, std::vector<Move> &moves);
+void searchQueenMoves(const Board &board, const bool turn,
+                      const bool should_move, std::vector<Move> &moves);
+void searchRookMoves(const Board &board, const bool turn,
+                     const bool should_move, std::vector<Move> &moves);
+void searchBishopMoves(const Board &board, const bool turn,
+                       const bool should_move, std::vector<Move> &moves);
+void searchKnightMoves(const Board &board, const bool turn,
+                       const bool should_move, std::vector<Move> &moves);
+void searchPawnMoves(const Board &board, const bool turn,
+                     const bool should_move, std::vector<Move> &moves);
 
 constexpr std::array<int32_t, 4> move_row_diag = {-1, -1, +1, +1};
 constexpr std::array<int32_t, 4> move_col_diag = {-1, +1, -1, +1};

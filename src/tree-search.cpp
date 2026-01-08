@@ -1,8 +1,6 @@
 #include "tree-search.hpp"
 #include "search.hpp"
 
-#include <iostream>
-#include <map>
 #include <queue>
 #include <tuple>
 
@@ -13,7 +11,8 @@ int64_t TreeSearch::search(const Board &board, int32_t depth) {
 
   int64_t cnt = 0;
 
-  std::map<std::string, int64_t> move_counts;
+  std::vector<Move> new_moves_to_check;
+  new_moves_to_check.resize(256);
 
   while (!all_boards.empty()) {
     std::tuple<Board, int32_t, std::string> head_node = all_boards.front();
@@ -25,13 +24,15 @@ int64_t TreeSearch::search(const Board &board, int32_t depth) {
 
     if (cur_depth == depth) {
       cnt++;
-      move_counts[initial_move]++;
+      // move_counts[initial_move]++;
       continue;
     }
 
-    std::vector<Move> moves = MoveExplorer::searchAllMoves(
-        current_node, current_node.getPlayerTurn(), true);
-    for (const auto &next_move : moves) {
+    new_moves_to_check.clear();
+    MoveExplorer::searchAllMoves(current_node, current_node.getPlayerTurn(),
+                                 true, new_moves_to_check);
+
+    for (const auto &next_move : new_moves_to_check) {
       all_boards.push(std::make_tuple(
           current_node.makeMove(
               next_move.pos_from, next_move.pos_to, next_move.piece_type,
