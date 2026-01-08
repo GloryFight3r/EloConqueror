@@ -14,14 +14,17 @@ void generateMoves(const std::array<int32_t, N> &move_row,
   int64_t piece_positions = board.getPiece(piece_type, turn);
 
   while (piece_positions) {
-    int32_t position = std::__countr_zero(piece_positions);
+    const int8_t position = std::__countr_zero(piece_positions);
 
-    int32_t pos_row = position / Board::BOARD_ROWS;
-    int32_t pos_col = position % Board::BOARD_ROWS;
+    const int8_t pos_row = position / Board::BOARD_ROWS;
+    const int8_t pos_col = position % Board::BOARD_ROWS;
+
+    const int64_t from_bitboard_pos =
+        Board::getPositionAsBitboard(pos_row, pos_col);
 
     for (size_t i{0}; i < N; i++) {
-      int32_t new_pos_row = pos_row + move_row[i];
-      int32_t new_pos_col = pos_col + move_col[i];
+      const int8_t new_pos_row = pos_row + move_row[i];
+      const int8_t new_pos_col = pos_col + move_col[i];
 
       // check if the piece is outside
       if (new_pos_row < 0 || new_pos_row >= Board::BOARD_ROWS ||
@@ -29,9 +32,7 @@ void generateMoves(const std::array<int32_t, N> &move_row,
         continue;
       }
 
-      int64_t from_bitboard_pos =
-          Board::getPositionAsBitboard(pos_row, pos_col);
-      int64_t to_bitboard_pos =
+      const int64_t to_bitboard_pos =
           Board::getPositionAsBitboard(new_pos_row, new_pos_col);
 
       // check if there is a piece of the same color on this square
@@ -77,18 +78,21 @@ void generatePawnMoves(const Board &board, const bool should_move,
   int64_t piece_positions = board.getPiece(piece_type, turn);
 
   while (piece_positions) {
-    int32_t position = std::__countr_zero(piece_positions);
+    const int8_t position = std::__countr_zero(piece_positions);
 
-    int32_t pawn_row = position / Board::BOARD_ROWS;
-    int32_t pawn_col = position % Board::BOARD_ROWS;
+    const int8_t pawn_row = position / Board::BOARD_ROWS;
+    const int8_t pawn_col = position % Board::BOARD_ROWS;
+
+    const int64_t from_bitboard_pos =
+        Board::getPositionAsBitboard(pawn_row, pawn_col);
 
     for (std::size_t i{0}; i < move_types.size(); i++) {
       if (!should_move && (i == 1 || i == 3)) {
         continue;
       }
 
-      int32_t new_pos_row = pawn_row + move_row[i];
-      int32_t new_pos_col = pawn_col + move_col[i];
+      const int8_t new_pos_row = pawn_row + move_row[i];
+      const int8_t new_pos_col = pawn_col + move_col[i];
 
       // check if the piece is outside
       if (new_pos_row < 0 || new_pos_row >= Board::BOARD_ROWS ||
@@ -96,9 +100,7 @@ void generatePawnMoves(const Board &board, const bool should_move,
         continue;
       }
 
-      int64_t from_bitboard_pos =
-          Board::getPositionAsBitboard(pawn_row, pawn_col);
-      int64_t to_bitboard_pos =
+      const int64_t to_bitboard_pos =
           Board::getPositionAsBitboard(new_pos_row, new_pos_col);
 
       // check if there is a piece of the same color on this square
@@ -147,7 +149,6 @@ void generatePawnMoves(const Board &board, const bool should_move,
                                Pieces{piece_type}, promotion_type});
         }
       } else {
-
         moves.push_back(Move{from_bitboard_pos, to_bitboard_pos,
                              Pieces{piece_type}, move_types[i]});
       }
@@ -167,17 +168,17 @@ void moveIncrementally(const Board &board, const bool should_move,
   int64_t piece_positions = board.getPiece(piece_type, turn);
 
   while (piece_positions) {
-    const int32_t position = std::__countr_zero(piece_positions);
+    const int8_t position = std::__countr_zero(piece_positions);
 
-    const int32_t start_row = position / Board::BOARD_ROWS;
-    const int32_t start_col = position % Board::BOARD_ROWS;
+    const int8_t start_row = position / Board::BOARD_ROWS;
+    const int8_t start_col = position % Board::BOARD_ROWS;
 
     const int64_t from_bitboard_pos =
         Board::getPositionAsBitboard(start_row, start_col);
 
     for (std::size_t i{0}; i < N; i++) {
-      int32_t pos_row = start_row;
-      int32_t pos_col = start_col;
+      int8_t pos_row = start_row;
+      int8_t pos_col = start_col;
 
       pos_row += move_row[i];
       pos_col += move_col[i];

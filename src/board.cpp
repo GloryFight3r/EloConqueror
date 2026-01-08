@@ -1,5 +1,4 @@
 #include "board.hpp"
-#include "move.hpp"
 #include "search.hpp"
 #include "util.hpp"
 
@@ -197,10 +196,11 @@ Board Board::makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,
   Board new_board = *this;
   new_board._player_turn = turn ^ 1; // change player's turn
 
-  new_board._pieces_not_moved &= ~from_pos; // mark the current cell as moved
-  new_board._pieces_not_moved &= ~to_pos;   // mark the current cell as moved
+  new_board._pieces_not_moved &=
+      ~(from_pos | to_pos); // mark the current cell as moved
 
   new_board._pieces[turn][piece_type] ^= from_pos;
+
   switch (move_type) {
   case MoveType::PAWN_PROMOTE_QUEEN:
     new_board._pieces[turn][Pieces::QUEEN] ^= to_pos;
@@ -229,7 +229,7 @@ Board Board::makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,
       new_board._last_move_two_squares_push_pawn[turn] = (to_pos >> 8);
     }
   } else if (move_type == MoveType::SHORT_CASTLE_KING_MOVE) {
-    int8_t row_to_use = turn ? 7 : 0;
+    const int8_t row_to_use = turn ? 7 : 0;
 
     new_board._pieces[turn][Pieces::ROOK] ^=
         Board::getPositionAsBitboard(row_to_use, 7);
@@ -238,7 +238,7 @@ Board Board::makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,
 
     return new_board;
   } else if (move_type == MoveType::LONG_CASTLE_KING_MOVE) {
-    int8_t row_to_use = turn ? 7 : 0;
+    const int8_t row_to_use = turn ? 7 : 0;
 
     new_board._pieces[turn][Pieces::ROOK] ^=
         Board::getPositionAsBitboard(row_to_use, 0);
@@ -269,17 +269,16 @@ Board Board::makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,
 }
 
 bool Board::isUnderCheck(bool turn) const {
-  std::vector<Move> all_attacked_squares;
-  all_attacked_squares.resize(64);
+  MoveExplorer::helper_for_attacked_squares.clear();
+  MoveExplorer::searchAllMoves(*this, turn ^ 1, false,
+                               MoveExplorer::helper_for_attacked_squares);
 
-  MoveExplorer::searchAllMoves(*this, turn ^ 1, false, all_attacked_squares);
-
-  for (const auto &move_to_check : all_attacked_squares) {
-    if (static_cast<bool>(move_to_check.pos_to & _pieces[turn][Pieces::KING])) {
-      return true;
-    }
+  bool is_under_check = false;
+  for (const auto &move_to_check : MoveExplorer::helper_for_attacked_squares) {
+    is_under_check |=
+        static_cast<bool>(move_to_check.pos_to & _pieces[turn][Pieces::KING]);
   }
-  return false;
+  return is_under_check;
 }
 
 void Board::displayBoard() const {

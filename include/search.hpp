@@ -23,6 +23,8 @@ void searchKnightMoves(const Board &board, const bool turn,
 void searchPawnMoves(const Board &board, const bool turn,
                      const bool should_move, std::vector<Move> &moves);
 
+static std::vector<Move> helper_for_attacked_squares;
+
 constexpr std::array<int32_t, 4> move_row_diag = {-1, -1, +1, +1};
 constexpr std::array<int32_t, 4> move_col_diag = {-1, +1, -1, +1};
 
