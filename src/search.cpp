@@ -45,12 +45,13 @@ std::vector<Move> generateMoves(const std::array<int32_t, N> &move_row,
         Board new_board = board.makeMove(from_bitboard_pos, to_bitboard_pos,
                                          piece_type, turn, move_type);
 
-        if (new_board.isUnderCheck(turn ^ 1)) {
+        if (new_board.isUnderCheck(turn)) {
           continue;
         }
       }
 
-      moves.push_back(Move{from_bitboard_pos, to_bitboard_pos, move_type});
+      moves.push_back(Move{from_bitboard_pos, to_bitboard_pos,
+                           Pieces{piece_type}, move_type});
     }
 
     piece_positions ^= (int64_t{1} << position);
@@ -73,7 +74,7 @@ std::vector<Move> generatePawnMoves(const Board &board, const bool should_move,
   const int32_t start_row = turn ? Board::BOARD_ROWS - 2 : 1;
   const int8_t piece_type = Pieces::PAWN;
 
-  int64_t piece_positions = board.getPiece(5, turn);
+  int64_t piece_positions = board.getPiece(piece_type, turn);
 
   while (piece_positions) {
     int32_t position = std::__countr_zero(piece_positions);
@@ -81,7 +82,7 @@ std::vector<Move> generatePawnMoves(const Board &board, const bool should_move,
     int32_t pawn_row = position / Board::BOARD_ROWS;
     int32_t pawn_col = position % Board::BOARD_ROWS;
 
-    for (std::size_t i{0}; i < 4; i++) {
+    for (std::size_t i{0}; i < move_types.size(); i++) {
       int32_t new_pos_row = pawn_row + move_row[i];
       int32_t new_pos_col = pawn_col + move_col[i];
 
@@ -106,7 +107,7 @@ std::vector<Move> generatePawnMoves(const Board &board, const bool should_move,
         Board new_board = board.makeMove(position, to_bitboard_pos, piece_type,
                                          turn, move_types[i]);
 
-        if (new_board.isUnderCheck(turn ^ 1)) {
+        if (new_board.isUnderCheck(turn)) {
           continue;
         }
       }
@@ -120,7 +121,8 @@ std::vector<Move> generatePawnMoves(const Board &board, const bool should_move,
         continue;
       }
 
-      moves.push_back(Move{from_bitboard_pos, to_bitboard_pos, move_types[i]});
+      moves.push_back(Move{from_bitboard_pos, to_bitboard_pos,
+                           Pieces{piece_type}, move_types[i]});
     }
 
     piece_positions ^= (int64_t{1} << position);
@@ -139,10 +141,10 @@ std::vector<Move> moveIncrementally(const Board &board, const bool should_move,
   int64_t piece_positions = board.getPiece(piece_type, turn);
 
   while (piece_positions) {
-    int32_t position = std::__countr_zero(piece_positions);
+    const int32_t position = std::__countr_zero(piece_positions);
 
-    int32_t start_row = position / Board::BOARD_ROWS;
-    int32_t start_col = position % Board::BOARD_ROWS;
+    const int32_t start_row = position / Board::BOARD_ROWS;
+    const int32_t start_col = position % Board::BOARD_ROWS;
 
     int64_t from_bitboard_pos =
         Board::getPositionAsBitboard(start_row, start_col);
@@ -173,12 +175,13 @@ std::vector<Move> moveIncrementally(const Board &board, const bool should_move,
           Board new_board = board.makeMove(from_bitboard_pos, to_bitboard_pos,
                                            piece_type, turn, move_type);
 
-          if (new_board.isUnderCheck(turn ^ 1)) {
+          if (new_board.isUnderCheck(turn)) {
             continue;
           }
         }
 
-        moves.push_back(Move{from_bitboard_pos, to_bitboard_pos, move_type});
+        moves.push_back(Move{from_bitboard_pos, to_bitboard_pos,
+                             Pieces{piece_type}, move_type});
         // there is a piece of the opposite color
         if (board.isCellNotEmpty(to_bitboard_pos, turn ^ 1)) {
           break;
@@ -269,7 +272,7 @@ std::vector<Move> generateCastleMoves(const Board &board, bool turn) {
 
     if (!anyCellIsUnderAttack(attacked_squares, cells_to_check) &&
         cellsAreFree(board, cells_to_check_if_free)) {
-      moves.push_back(Move{cells_to_check[0], cells_to_check[2],
+      moves.push_back(Move{cells_to_check[0], cells_to_check[2], Pieces::KING,
                            MoveType::SHORT_CASTLE_KING_MOVE});
     }
 
@@ -285,8 +288,8 @@ std::vector<Move> generateCastleMoves(const Board &board, bool turn) {
 
     if (!anyCellIsUnderAttack(attacked_squares, cells_to_check) &&
         cellsAreFree(board, cells_to_check_if_free)) {
-      moves.push_back(Move{cells_to_check[2], cells_to_check[1],
-                           MoveType::SHORT_CASTLE_KING_MOVE});
+      moves.push_back(Move{cells_to_check[2], cells_to_check[0], Pieces::KING,
+                           MoveType::LONG_CASTLE_KING_MOVE});
     }
   }
 
@@ -302,8 +305,10 @@ std::vector<Move> MoveExplorer::searchKingMoves(const Board &board,
   const std::array<int32_t, 8> move_row = {-1, -1, -1, 0, +1, +1, +1, 0};
   const std::array<int32_t, 8> move_col = {-1, 0, +1, +1, +1, 0, -1, -1};
 
-  for (const auto &cur_move : generateCastleMoves(board, turn)) {
-    moves.push_back(cur_move);
+  if (should_move) {
+    for (const auto &cur_move : generateCastleMoves(board, turn)) {
+      moves.push_back(cur_move);
+    }
   }
 
   for (const auto &cur_move :

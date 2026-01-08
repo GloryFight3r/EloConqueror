@@ -1,18 +1,9 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "move.hpp"
+#include "util.hpp"
 
 #include <cstdint>
-
-enum Pieces : uint8_t {
-  KING = 0,
-  QUEEN = 1,
-  ROOK = 2,
-  BISHOP = 3,
-  KNIGHT = 4,
-  PAWN = 5
-};
 
 class Board {
 public:
@@ -55,7 +46,7 @@ private:
    * was not a two square push from a pawn.
    * Set to the pawn's square otherwise
    */
-  int64_t _last_move_two_squares_push_pawn;
+  int64_t _last_move_two_squares_push_pawn[2];
   int64_t _pieces_not_moved;
   bool _player_turn;
 };

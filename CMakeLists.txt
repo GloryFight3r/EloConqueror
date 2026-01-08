@@ -11,7 +11,8 @@ include(CTest)
 
 add_subdirectory("tests")
 
-add_library(EloConquerorLib "src/board.cpp" "src/search.cpp")
+add_library(EloConquerorLib "src/board.cpp" "src/search.cpp"
+                            "src/tree-search.cpp")
 
 target_include_directories(EloConquerorLib PUBLIC "include/")
 
