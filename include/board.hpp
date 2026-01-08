@@ -4,6 +4,7 @@
 #include "util.hpp"
 
 #include <cstdint>
+#include <string>
 
 class Board {
 public:
@@ -13,9 +14,16 @@ public:
 
   Board();
 
+  Board(std::string fen_string);
+
   static inline int64_t getPositionAsBitboard(int8_t row, int8_t col) {
     return (int64_t{1} << (row * BOARD_COLS + col));
   }
+
+  void displayBoard() const;
+
+  int64_t chessSquareAsPosition(std::string chess_square) const;
+  std::string positionAsChessSquare(int64_t pos) const;
 
   Board makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type, bool turn,
                  MoveType move_type) const;

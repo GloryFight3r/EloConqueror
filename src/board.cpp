@@ -3,6 +3,11 @@
 #include "search.hpp"
 #include "util.hpp"
 
+#include <bit>
+#include <cctype>
+#include <cstdlib>
+#include <iostream>
+#include <string>
 #include <vector>
 
 Board::Board() {
@@ -47,6 +52,112 @@ Board::Board() {
       _pieces[0][2] | _pieces[1][2] | _pieces[0][0] | _pieces[1][0];
 }
 
+Board::Board(std::string fen_string) {
+  for (std::size_t colour{0}; colour < 2; colour++) {
+    for (std::size_t piece_type{0}; piece_type < Board::ALL_PIECE_TYPES;
+         piece_type++) {
+      _pieces[colour][piece_type] = 0;
+    }
+  }
+
+  size_t whitespace_loc = fen_string.find(" ");
+
+  int32_t cur_row = 7;
+  int32_t piece_col = 0;
+
+  for (const char letter_to_parse : fen_string.substr(0, whitespace_loc)) {
+    if (letter_to_parse >= '1' && letter_to_parse <= '8') {
+      piece_col += atoi(&letter_to_parse);
+    } else if (letter_to_parse == '/') {
+      piece_col = 0;
+      cur_row--;
+    } else {
+      bool player_turn = (letter_to_parse >= 'a' && letter_to_parse <= 'z');
+      int32_t piece_type = 0;
+
+      switch (std::tolower(letter_to_parse)) {
+      case 'k':
+        piece_type = 0;
+        break;
+      case 'q':
+        piece_type = 1;
+        break;
+      case 'r':
+        piece_type = 2;
+        break;
+      case 'b':
+        piece_type = 3;
+        break;
+      case 'n':
+        piece_type = 4;
+        break;
+      case 'p':
+        piece_type = 5;
+        break;
+      }
+      // std::cout << cur_row << std::endl;
+      _pieces[player_turn][piece_type] |=
+          Board::getPositionAsBitboard(cur_row, piece_col);
+      piece_col += 1;
+    }
+  }
+
+  // who's turn
+  whitespace_loc = fen_string.find(" ", whitespace_loc + 1);
+
+  _player_turn = fen_string[whitespace_loc - 1] == 'b';
+
+  // handles castling
+  _pieces_not_moved = 0;
+
+  std::size_t castling_rights_start = whitespace_loc + 1;
+  whitespace_loc = fen_string.find(" ", castling_rights_start);
+
+  for (const char letter_to_parse : fen_string.substr(
+           castling_rights_start, whitespace_loc - castling_rights_start)) {
+    switch (letter_to_parse) {
+    case 'K':
+      _pieces_not_moved |= Board::getPositionAsBitboard(0, 4);
+      _pieces_not_moved |= Board::getPositionAsBitboard(0, 7);
+      break;
+    case 'k':
+      _pieces_not_moved |= Board::getPositionAsBitboard(7, 4);
+      _pieces_not_moved |= Board::getPositionAsBitboard(7, 7);
+      break;
+    case 'Q':
+      _pieces_not_moved |= Board::getPositionAsBitboard(0, 4);
+      _pieces_not_moved |= Board::getPositionAsBitboard(0, 0);
+      break;
+    case 'q':
+      _pieces_not_moved |= Board::getPositionAsBitboard(7, 4);
+      _pieces_not_moved |= Board::getPositionAsBitboard(7, 0);
+      break;
+    }
+  }
+
+  std::size_t enpassant_attack_square_start = whitespace_loc + 1;
+  whitespace_loc = fen_string.find(" ", enpassant_attack_square_start);
+
+  _last_move_two_squares_push_pawn[_player_turn ^ 1] = chessSquareAsPosition(
+      fen_string.substr(enpassant_attack_square_start,
+                        whitespace_loc - enpassant_attack_square_start));
+
+  // TODO halfmove counter
+
+  // TODO fullmove counter
+}
+
+int64_t Board::chessSquareAsPosition(std::string chess_square) const {
+  if (chess_square == "-") {
+    return 0;
+  }
+
+  int8_t col = chess_square[0] - 'a';
+  int8_t row = chess_square[1] - '1';
+
+  return getPositionAsBitboard(row, col);
+}
+
 bool Board::checkCastlingRights(bool turn, bool castle_type) const {
   int8_t row_to_use = turn ? 7 : 0;
   int8_t col_to_use = castle_type ? 7 : 0;
@@ -76,7 +187,11 @@ Board Board::makeMove(int64_t from_pos, int64_t to_pos, int8_t piece_type,
       new_board._last_move_two_squares_push_pawn[1] = 0;
 
   if (move_type == MoveType::PAWN_MOVE_TWO_SQUARES) {
-    new_board._last_move_two_squares_push_pawn[turn] = to_pos;
+    if (turn) {
+      new_board._last_move_two_squares_push_pawn[turn ^ 1] = (to_pos << 8);
+    } else {
+      new_board._last_move_two_squares_push_pawn[turn ^ 1] = (to_pos >> 8);
+    }
   } else if (move_type == MoveType::SHORT_CASTLE_KING_MOVE) {
     int8_t row_to_use = turn ? 7 : 0;
 
@@ -137,6 +252,73 @@ bool Board::isUnderCheck(bool turn) const {
         static_cast<bool>(move_to_check.pos_to & _pieces[turn][Pieces::KING]);
   }
   return result;
+}
+
+void Board::displayBoard() const {
+  std::cout << (_player_turn ? "Black to turn" : "White to turn") << "\n";
+
+  std::cout << checkCastlingRights(0, 1) << "\n";
+  std::cout << checkCastlingRights(0, 0) << "\n";
+  std::cout << checkCastlingRights(1, 1) << "\n";
+  std::cout << checkCastlingRights(1, 0) << "\n";
+
+  std::cout << positionAsChessSquare(
+                   _last_move_two_squares_push_pawn[_player_turn ^ 1])
+            << "\n";
+
+  const std::array<char, 7> piece_type_to_char = {'k', 'q', 'r', 'b',
+                                                  'n', 'p', ' '};
+
+  for (std::size_t j{0}; j < BOARD_COLS * 4; j++) {
+    std::cout << "-";
+  }
+
+  std::cout << "\n";
+  for (std::int32_t i = BOARD_ROWS - 1; i >= 0; i--) {
+
+    std::cout << "| ";
+    for (std::int32_t j = 0; j < BOARD_COLS; j++) {
+      std::int8_t piece_type = 6;
+      std::int8_t piece_colour = 1;
+
+      for (std::size_t colour{0}; colour < 2; colour++) {
+        for (std::size_t piece_to_check{0}; piece_to_check < ALL_PIECE_TYPES;
+             piece_to_check++) {
+          if (_pieces[colour][piece_to_check] &
+              Board::getPositionAsBitboard(i, j)) {
+            piece_colour = colour;
+            piece_type = piece_to_check;
+          }
+        }
+      }
+
+      if (piece_colour == 0) {
+        std::cout << char(toupper(piece_type_to_char[piece_type]));
+      } else {
+        std::cout << piece_type_to_char[piece_type];
+      }
+      std::cout << " | ";
+    }
+    std::cout << "\n";
+    for (std::size_t j{0}; j < BOARD_COLS * 4; j++) {
+      std::cout << "-";
+    }
+
+    std::cout << "\n";
+  }
+}
+
+std::string Board::positionAsChessSquare(int64_t pos) const {
+  if (pos == 0) {
+    return "-";
+  }
+
+  std::size_t arr_pos = std::__countr_zero(pos);
+
+  int8_t row = arr_pos / BOARD_COLS;
+  int8_t cols = arr_pos % BOARD_COLS;
+
+  return std::string{char(cols + 'a'), char(row + '1')};
 }
 
 int64_t Board::getPiece(int8_t piece_type, bool colour) const {
