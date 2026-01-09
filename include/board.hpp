@@ -30,8 +30,16 @@ public:
 
   Board makeMove(const std::string &move_to_make) const;
 
-  bool isCellNotEmpty(int64_t to_pos, bool turn) const;
-  bool isUnderCheck(bool turn) const;
+  inline bool isCellNotEmpty(int64_t to_pos, bool turn) const {
+    bool result = 0;
+    for (std::size_t i{0}; i < Board::ALL_PIECE_TYPES; i++) {
+      result |= static_cast<bool>(_pieces[turn][i] & to_pos);
+    }
+
+    return result;
+  }
+
+  bool isUnderCheck(int64_t pos_to_check, bool turn) const;
   bool isEnPassant(int64_t pos, bool turn) const;
   // 1 - short castle ... 0 - long castle
   bool checkCastlingRights(bool turn, bool castle_type) const;
