@@ -38,7 +38,8 @@ public:
 
     return result;
   }
-  bool isUnderCheck(bool turn) const;
+
+  bool isUnderCheck(int64_t pos_to_check, bool turn) const;
   bool isEnPassant(int64_t pos, bool turn) const;
   // 1 - short castle ... 0 - long castle
   bool checkCastlingRights(bool turn, bool castle_type) const;
